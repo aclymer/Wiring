@@ -83,22 +83,22 @@ class MenuItem
     || #
     ||
     || @example
-    || | MenuItem file = MenuItem(menuBackend, "File", 1, 'F');
+    || | MenuItem file = MenuItem(menuBackend, "File", 10, 1, 'F');
     || #
     ||
     || @parameter mb  the menu backend that controls this item
     || @parameter itemName  the name of the item
+    || @parameter val  the default value of this item
     || @parameter lvl  the level of this item in the hierachy
     || @parameter shortKey the mnemonic 'shortkey'
     */
-    MenuItem(MenuBackend &mb, const char* itemName, unsigned char lvl = 0, char shortKey = '\0') : name(itemName), shortkey(shortKey)
+    MenuItem(MenuBackend &mb, const char* itemName, int val = 0, unsigned char lvl = 0, char shortKey = '\0') : name(itemName), shortkey(shortKey)
     {
       registerBackend(mb);
       before = right = after = left = 0;
-      value = 0;
+      value = val;
       level = lvl;
     }
-
     /*
     || @description
     || | Register a backend for this item to use for callbacks and such
@@ -172,11 +172,23 @@ class MenuItem
     || | Check to see if this item has children
     || #
     ||
-    || @return true if the item has children
+    || @return return bits for each of the items children
     */
-    inline const bool hasChildren() const
-    {
-      return (before || right || after || left);
+    inline const byte hasChildren() const
+    {  /*	set up 4-bit return for navigational aid
+    (use bitRead() to decode):
+			B0001 = left
+			B0010 = before
+			B0100 = right
+			B1000 = after
+		*/
+		byte child = B0000;
+		if (left) child |= B0001;
+		if (before) child |= B0010;
+		if (right) child |= B0100;
+		if (after) child |= B1000;
+		
+		return child;
     }
     /*
     || @description
@@ -451,7 +463,7 @@ class MenuItem
     || @return the value
     */
     int decrement(int v = 1);
-    /*
+	  /*
     || @description
     || | Check to see if an item is equal to this
     || #
